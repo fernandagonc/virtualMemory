@@ -1,6 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+// https://www.alltestanswers.com/designing-a-virtual-memory-manager-using-c-program/
+// https://github.com/ranadeep47/virtual-memory-simulation
+// https://github.com/8tiqa/vm-mgt/blob/master/vm.c
+// https://github.com/joelrlneto/memoriavirtual/blob/master/SMV.c
+
 
 
 int main(int argc, char *argv[]){
@@ -35,18 +41,32 @@ int main(int argc, char *argv[]){
     int operations = 0; 
     int writes = 0;
     int reads = 0;
+    int s = 0;
+    int tmpPageSize = pageSize;
+    while (tmpPageSize > 1) {
+        tmpPageSize = tmpPageSize >> 1;
+        s++;
+    }
+
+    unsigned page;
+    unsigned addr;
+    char rw;
+    
     if(strlen(file) > 0){
         FILE *fileOpen = fopen(file, "r");
         
-        while(fgets(line, 20, fileOpen) != NULL){
+        clock_t begin = clock();
+
+        while(fscanf(fileOpen,"%x %c",&addr,&rw) != EOF){
             operations++;
-            // strncpy(tmpAddress, line, 8);
-            // tmpAddress[8] = '\0';
-            if(line[9] == 'W' || line[9] == 'w'){
+            
+            // page = tmpAddress >> s;
+            
+            if(rw == 'W' || rw == 'w'){
                 writes++;
             //     WriteAddress(tmpAddress);
              }
-             else if(line[9] == 'R' || line[9] == 'r'){				
+             else if(rw == 'R' || rw == 'r'){				
             //     if(Find(tmpAddress)){
             //         hits++;	
                 // }
@@ -61,7 +81,22 @@ int main(int argc, char *argv[]){
             //     return 0;	
             // }	
         }
-        printf("Operações: %d \n Read: %d Write: %d", operations, reads, writes);
+        clock_t end = clock();
+        double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+
+
+        printf("\nExecutando o simulador...\n");
+        printf("Arquivo de entrada: %s\n", file);
+	    printf("Tamanho da memória: %iKB\n", memSize);
+	    printf("Tamanho das páginas: %iKB\n", pageSize);
+	    printf("Técnica de reposição: %s\n", alg);
+	    printf("Número de páginas: %i\n", numPages);
+	    printf("Operações no arquivo de entrada: %i\n", operations);
+	    printf("Operações de leitura: %i\n", reads);
+	    printf("Operações de escrita: %i\n", writes);
+        printf("Tempo de execução: %lf segundos \n \n", time_spent);
+
     }
     else{
         printf("ERRO: Arquivo de entrada inválido.");
