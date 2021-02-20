@@ -8,9 +8,29 @@
 // https://github.com/joelrlneto/memoriavirtual/blob/master/SMV.c
 
 
+typedef struct {
+    int validBit; //free =0; notfree = 1;
+    int dirtyBit; //writeback; =0 first write; =1 overwrite;
+    int frameNumber;
+    int pageNumber;
+
+} PageTableEntry;
+
+void writeOnTable(int pageNumber, PageTableEntry * pageTable){
+    pageTable[pageNumber].validBit = 1;
+    if(pageTable[pageNumber].dirtyBit == -1){
+        pageTable[pageNumber].dirtyBit = 0;
+    }
+    else if(pageTable[pageNumber].dirtyBit == 0){
+        pageTable[pageNumber].dirtyBit = 1;
+    }
+    
+    //write
+
+}
 
 int main(int argc, char *argv[]){
-    char *alg, *file, line[20], tmpAddress[9];
+    char *alg, *file;
 
     alg = argv[1];
 	file = argv[2];
@@ -41,45 +61,67 @@ int main(int argc, char *argv[]){
     int operations = 0; 
     int writes = 0;
     int reads = 0;
-    int s = 0;
+    int pageFaults = 0;
+    int writeBacks = 0;
+
+    unsigned offset = 0; 
     int tmpPageSize = pageSize;
     while (tmpPageSize > 1) {
         tmpPageSize = tmpPageSize >> 1;
-        s++;
+        offset++;
     }
 
-    unsigned page;
-    unsigned addr;
+    unsigned virtualPageNumber; 
+    char addr[8];
     char rw;
+    int i, j;
+    unsigned int addrInt;
+    PageTableEntry pageTable[numPages];
+    for(i = 0; i < numPages; i++){
+        pageTable[i].dirtyBit = -1;
+        pageTable[i].validBit = 0;
+    }
+
     
     if(strlen(file) > 0){
         FILE *fileOpen = fopen(file, "r");
         
         clock_t begin = clock();
 
-        while(fscanf(fileOpen,"%x %c",&addr,&rw) != EOF){
+        while(fscanf(fileOpen,"%s %c", addr,&rw) != EOF){
             operations++;
-            
-            // page = tmpAddress >> s;
-            
+            addrInt = (int)strtol(addr, NULL, 16);
+            // printf("addr: %d\n", addrInt);
+            virtualPageNumber = addrInt >> offset;
+
             if(rw == 'W' || rw == 'w'){
                 writes++;
-            //     WriteAddress(tmpAddress);
-             }
-             else if(rw == 'R' || rw == 'r'){				
-            //     if(Find(tmpAddress)){
-            //         hits++;	
-                // }
-            //     else{
-            //         misses++;
-            //         WriteAddress(tmpAddress);
-            //     }
+                if(pageTable[virtualPageNumber].validBit == 0){
+                    writeOnTable(virtualPageNumber, pageTable);
+
+                }
+                else{ //find free page
+                    for (j=0;j<numPages;j++){
+						if(pageTable[j].validBit == 0){
+                            writeOnTable(j, pageTable);
+                            break;
+						}
+					}
+                    if(j == numPages){ //no free pages
+                        writeBacks++;
+                        //algoritmos de substituição
+                    }	
+                }
+
+            }
+            else if(rw == 'R' || rw == 'r'){				
                 reads++;
-             }
-            // else{
-            //     printf("ERRO: Os dados do arquivo de entrada estao em formato incorreto.");
-            //     return 0;	
-            // }	
+                if(pageTable[virtualPageNumber].validBit == 0){//empty page
+                    pageFaults++;
+                }
+
+            }
+
         }
         clock_t end = clock();
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
@@ -87,6 +129,7 @@ int main(int argc, char *argv[]){
 
 
         printf("\nExecutando o simulador...\n");
+        printf("Offset: %x\n", offset);
         printf("Arquivo de entrada: %s\n", file);
 	    printf("Tamanho da memória: %iKB\n", memSize);
 	    printf("Tamanho das páginas: %iKB\n", pageSize);
