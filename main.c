@@ -12,7 +12,7 @@ typedef struct {
     int frameNumber;
     int pageNumber;
     char addr[8];
-    int lruID;
+    int lruID; //quanto maior o ID, mais recente o endereço foi acessado
 } PageTableEntry;
 
 void writeOnTable(int pageNumber, PageTableEntry * pageTable, char * addr){
@@ -57,12 +57,16 @@ int findFreeAddress(PageTableEntry * pageTable, int numPages){
 
 int LRU(PageTableEntry * pageTable, int numPages){
     int lru = -1;
+    int minReference = pageTable[0].lruID;
+
     for(int i=0; i < numPages; i++){
-        if(pageTable[i].lruID > lru){//no address in this position
+
+        if(pageTable[i].lruID <= minReference){
             lru = i;
+            minReference = pageTable[i].lruID;
         }
     }
-        
+
     return lru; 
 }
 
@@ -117,14 +121,17 @@ int main(int argc, char *argv[]){
 
     for(i = 0; i < numPages; i++){
         pageTable[i].dirtyBit = -1;
-        pageTable[i].validBit = 0;        
+        pageTable[i].validBit = 0;    
+        memcpy(pageTable[i].addr, "", strlen("")+1);
     }
     FILE *fileOpen = fopen(file, "r");  
     if(fileOpen != NULL){       
         clock_t begin = clock();
+        printf("TABELA DE SUBSTIUIÇÕES\n");
 
         while(fscanf(fileOpen,"%s %c", addr,&rw) != EOF){
             operations++;
+            addr[8] = '\0';
             // addrInt = (int)strtol(addr, NULL, 16);
             // printf("addr: %d\n", addrInt);
             //virtualPageNumber = addrInt >> offset;
@@ -145,21 +152,29 @@ int main(int argc, char *argv[]){
 
                     if(!strcmp(alg, "lru")){
                         freePageAt = LRU(pageTable, numPages);
-                        printf("lru on %d\n", freePageAt);
                         writeOnTable(freePageAt, pageTable, addr);
+                        pageTable[freePageAt].lruID = operations;
+
                     }
                     //algoritmos de substituição
                 }
                 else{
-                    // printf("Page free at %d, writing %s\n", freePageAt, addr);
                     writeOnTable(freePageAt, pageTable, addr);
                     pageTable[freePageAt].lruID = operations;
                 }
             }
             else{
-                printf("Page found at %d \n", pageFoundAt);
+                // printf("Page found at %d \n", pageFoundAt);
                 pageTable[pageFoundAt].lruID = operations;
             }
+
+            printf("\n");// tabela
+            for(j = 0; j < numPages; j++){     
+                printf("%s ", pageTable[j].addr);
+            }
+            printf("\n");
+
+
         }
 
         clock_t end = clock();
