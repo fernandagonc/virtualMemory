@@ -77,3 +77,19 @@ int FIFO(PageTableEntry * pageTable, int numPages){
 
     return fifo; 
 }
+
+
+int secondChance(PageTableEntry * pageTable, int numPages, int secondChancePtr){
+    if(secondChancePtr >= numPages){    
+        secondChancePtr = 0;
+    }
+    
+    while(pageTable[secondChancePtr].algID == 1) {
+        pageTable[secondChancePtr].algID = 0;
+        secondChancePtr++;
+        if(secondChancePtr >= numPages){
+            secondChancePtr = 0;
+        }
+    }
+    return secondChancePtr;
+}

@@ -4,12 +4,6 @@
 #include <time.h>
 #include "algorithm.c"
 
-int secondChance(PageTableEntry * pageTable, int numPages){
-
-
-
-}
-
 int main(int argc, char *argv[]){
     char *alg, *file;
     alg = argv[1];
@@ -58,10 +52,12 @@ int main(int argc, char *argv[]){
     }
 
     unsigned virtualPageNumber; 
-    int pageFoundAt, freePageAt;
+    int pageFoundAt, freePageAt = 0;
     char addr[8];
     char rw;
     unsigned int addrInt;
+
+    int secondChancePtr = 0;
 
     FILE *fileOpen = fopen(file, "r");  
     if(fileOpen != NULL){       
@@ -96,8 +92,9 @@ int main(int argc, char *argv[]){
                         pageTable[freePageAt].algID = operations;
                     }
                     else if(!strcmp(alg, "2a")){
-                        freePageAt = secondChance(pageTable, numPages);
+                        freePageAt = secondChance(pageTable, numPages, secondChancePtr);
                         writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
+                        secondChancePtr = freePageAt+1;
                     }
                     else if(!strcmp(alg, "fifo")){
                         freePageAt = FIFO(pageTable, numPages);
@@ -110,7 +107,8 @@ int main(int argc, char *argv[]){
                 }
                 else{
                     writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
-                    pageTable[freePageAt].algID = operations;
+                    if(!strcmp(alg, "lru") || !strcmp(alg, "fifo"))
+                        pageTable[freePageAt].algID = operations;
                 }
             }
             else{
@@ -122,6 +120,7 @@ int main(int argc, char *argv[]){
 
             printf("\n");// tabela
             for(j = 0; j < numPages; j++){     
+                printf("%d", pageTable[j].algID);
                 printf("%s ", pageTable[j].addr);
             }
             printf("\n");
