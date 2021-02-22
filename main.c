@@ -6,18 +6,20 @@
 // https://github.com/ranadeep47/virtual-memory-simulation
 // https://github.com/8tiqa/vm-mgt/blob/master/vm.c
 // https://github.com/joelrlneto/memoriavirtual/blob/master/SMV.c
-
-
 typedef struct {
     int validBit; //free =0; notfree = 1;
     int dirtyBit; //writeback; =0 first write; =1 overwrite;
     int frameNumber;
     int pageNumber;
-
+    char addr[8];
+    int lruID;
 } PageTableEntry;
 
-void writeOnTable(int pageNumber, PageTableEntry * pageTable){
+void writeOnTable(int pageNumber, PageTableEntry * pageTable, char * addr){
+
     pageTable[pageNumber].validBit = 1;
+    memcpy(pageTable[pageNumber].addr, addr, strlen(addr)+1);
+
     if(pageTable[pageNumber].dirtyBit == -1){
         pageTable[pageNumber].dirtyBit = 0;
     }
@@ -25,13 +27,47 @@ void writeOnTable(int pageNumber, PageTableEntry * pageTable){
         pageTable[pageNumber].dirtyBit = 1;
     }
     
-    //write
 
+}
+
+int findAddress(PageTableEntry * pageTable, char * addr, int numPages){
+
+    for(int i=0; i < numPages; i++){
+        if(pageTable[i].validBit == 1){//some address in this position
+            int str = strncmp(pageTable[i].addr, addr, sizeof(char[8]));
+            if(str == 0){ //found address
+                return i;
+            } 
+        }
+    }
+    return -1; //address not in pageTable
+
+}
+
+int findFreeAddress(PageTableEntry * pageTable, int numPages){
+    
+    for(int i=0; i < numPages; i++){
+        if(pageTable[i].validBit == 0){//no address in this position
+            return i;
+        }
+    }
+    return -1; //no free position found in pageTable
+
+}
+
+int LRU(PageTableEntry * pageTable, int numPages){
+    int lru = -1;
+    for(int i=0; i < numPages; i++){
+        if(pageTable[i].lruID > lru){//no address in this position
+            lru = i;
+        }
+    }
+        
+    return lru; 
 }
 
 int main(int argc, char *argv[]){
     char *alg, *file;
-
     alg = argv[1];
 	file = argv[2];
 	int pageSize = atoi(argv[3]);
@@ -72,61 +108,62 @@ int main(int argc, char *argv[]){
     }
 
     unsigned virtualPageNumber; 
+    int pageFoundAt, freePageAt;
     char addr[8];
     char rw;
     int i, j;
     unsigned int addrInt;
     PageTableEntry pageTable[numPages];
+
     for(i = 0; i < numPages; i++){
         pageTable[i].dirtyBit = -1;
-        pageTable[i].validBit = 0;
+        pageTable[i].validBit = 0;        
     }
-
-    
-    if(strlen(file) > 0){
-        FILE *fileOpen = fopen(file, "r");
-        
+    FILE *fileOpen = fopen(file, "r");  
+    if(fileOpen != NULL){       
         clock_t begin = clock();
 
         while(fscanf(fileOpen,"%s %c", addr,&rw) != EOF){
             operations++;
-            addrInt = (int)strtol(addr, NULL, 16);
+            // addrInt = (int)strtol(addr, NULL, 16);
             // printf("addr: %d\n", addrInt);
-            virtualPageNumber = addrInt >> offset;
+            //virtualPageNumber = addrInt >> offset;
+            pageFoundAt = findAddress(pageTable, addr, numPages);
 
             if(rw == 'W' || rw == 'w'){
-                writes++;
-                if(pageTable[virtualPageNumber].validBit == 0){
-                    writeOnTable(virtualPageNumber, pageTable);
-
-                }
-                else{ //find free page
-                    for (j=0;j<numPages;j++){
-						if(pageTable[j].validBit == 0){
-                            writeOnTable(j, pageTable);
-                            break;
-						}
-					}
-                    if(j == numPages){ //no free pages
-                        writeBacks++;
-                        //algoritmos de substituição
-                    }	
-                }
-
+                writes++;                
             }
             else if(rw == 'R' || rw == 'r'){				
                 reads++;
-                if(pageTable[virtualPageNumber].validBit == 0){//empty page
-                    pageFaults++;
-                }
-
             }
 
+            if(pageFoundAt == -1){//page not found
+                pageFaults++;
+                freePageAt = findFreeAddress(pageTable, numPages);
+                if(freePageAt == -1){//no free page
+                    writeBacks++;
+
+                    if(!strcmp(alg, "lru")){
+                        freePageAt = LRU(pageTable, numPages);
+                        printf("lru on %d\n", freePageAt);
+                        writeOnTable(freePageAt, pageTable, addr);
+                    }
+                    //algoritmos de substituição
+                }
+                else{
+                    // printf("Page free at %d, writing %s\n", freePageAt, addr);
+                    writeOnTable(freePageAt, pageTable, addr);
+                    pageTable[freePageAt].lruID = operations;
+                }
+            }
+            else{
+                printf("Page found at %d \n", pageFoundAt);
+                pageTable[pageFoundAt].lruID = operations;
+            }
         }
+
         clock_t end = clock();
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-
 
         printf("\nExecutando o simulador...\n");
         printf("Offset: %x\n", offset);
@@ -138,11 +175,14 @@ int main(int argc, char *argv[]){
 	    printf("Operações no arquivo de entrada: %i\n", operations);
 	    printf("Operações de leitura: %i\n", reads);
 	    printf("Operações de escrita: %i\n", writes);
+        printf("Número de pagefaults: %d\n", pageFaults);
         printf("Tempo de execução: %lf segundos \n \n", time_spent);
+
+        fclose(fileOpen);
 
     }
     else{
-        printf("ERRO: Arquivo de entrada inválido.");
+        printf("ERRO: Arquivo de entrada inválido.\n");
         return 0;
     }
     return 1;
