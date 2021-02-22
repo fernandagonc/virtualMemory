@@ -4,7 +4,7 @@ typedef struct {
     int frameNumber;
     unsigned int pageNumber;
     char addr[8];
-    int lruID; //quanto maior o ID, mais recente o endereço foi acessado
+    int algID; 
 } PageTableEntry;
 
 void writeOnTable(int pageNumber, PageTableEntry * pageTable, char * addr, unsigned int virtualPage){
@@ -49,15 +49,31 @@ int findFreeAddress(PageTableEntry * pageTable, int numPages){
 
 int LRU(PageTableEntry * pageTable, int numPages){
     int lru = -1;
-    int minReference = pageTable[0].lruID;
+    int minReference = pageTable[0].algID;
+    //quanto maior o algID, mais recente o endereço foi acessado
 
     for(int i=0; i < numPages; i++){
 
-        if(pageTable[i].lruID <= minReference){
+        if(pageTable[i].algID <= minReference){
             lru = i;
-            minReference = pageTable[i].lruID;
+            minReference = pageTable[i].algID;
         }
     }
 
     return lru; 
+}
+
+int FIFO(PageTableEntry * pageTable, int numPages){
+    int fifo = -1;
+    int firstReference = pageTable[0].algID;
+
+    for(int i=0; i < numPages; i++){
+
+        if(pageTable[i].algID <= firstReference){
+            fifo = i;
+            firstReference = pageTable[i].algID;
+        }
+    }
+
+    return fifo; 
 }

@@ -4,6 +4,12 @@
 #include <time.h>
 #include "algorithm.c"
 
+int secondChance(PageTableEntry * pageTable, int numPages){
+
+
+
+}
+
 int main(int argc, char *argv[]){
     char *alg, *file;
     alg = argv[1];
@@ -31,15 +37,17 @@ int main(int argc, char *argv[]){
 		return 0;	
 	}
 
-    int numPages = memSize/pageSize;
+    int numPages = 4;
     int i, j, operations = 0, writes = 0, reads = 0, pageFaults = 0, writeBacks = 0;
     PageTableEntry pageTable[numPages];
 
     for(i = 0; i < numPages; i++){
         pageTable[i].dirtyBit = -1;
         pageTable[i].pageNumber = -1;
-        pageTable[i].validBit = 0;    
+        pageTable[i].validBit = 0;
         memcpy(pageTable[i].addr, "", strlen("")+1);
+        pageTable[i].algID = 0;
+
     }
 
     unsigned offset = 0; 
@@ -85,22 +93,36 @@ int main(int argc, char *argv[]){
                     if(!strcmp(alg, "lru")){
                         freePageAt = LRU(pageTable, numPages);
                         writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
-                        pageTable[freePageAt].lruID = operations;
+                        pageTable[freePageAt].algID = operations;
                     }
-                    //algoritmos de substituição
+                    else if(!strcmp(alg, "2a")){
+                        freePageAt = secondChance(pageTable, numPages);
+                        writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
+                    }
+                    else if(!strcmp(alg, "fifo")){
+                        freePageAt = FIFO(pageTable, numPages);
+                        writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
+                        pageTable[freePageAt].algID = operations;
+                    }
+                    // else{
+                    
+                    // }
                 }
                 else{
                     writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
-                    pageTable[freePageAt].lruID = operations;
+                    pageTable[freePageAt].algID = operations;
                 }
             }
             else{
-                pageTable[pageFoundAt].lruID = operations;
+                if(pageTable[pageFoundAt].algID == 0 && !strcmp(alg, "2a"))
+                    pageTable[pageFoundAt].algID = 1;
+                if(!strcmp(alg, "lru"))
+                    pageTable[pageFoundAt].algID = operations;
             }
 
             printf("\n");// tabela
             for(j = 0; j < numPages; j++){     
-                printf("%x ", pageTable[j].pageNumber);
+                printf("%s ", pageTable[j].addr);
             }
             printf("\n");
 
