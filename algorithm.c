@@ -2,16 +2,17 @@ typedef struct {
     int validBit; //free =0; notfree = 1;
     int dirtyBit; //writeback; =0 first write; =1 overwrite;
     int frameNumber;
-    int pageNumber;
+    unsigned int pageNumber;
     char addr[8];
     int lruID; //quanto maior o ID, mais recente o endereço foi acessado
 } PageTableEntry;
 
-void writeOnTable(int pageNumber, PageTableEntry * pageTable, char * addr){
+void writeOnTable(int pageNumber, PageTableEntry * pageTable, char * addr, unsigned int virtualPage){
 
     pageTable[pageNumber].validBit = 1;
     memcpy(pageTable[pageNumber].addr, addr, strlen(addr)+1);
-
+    pageTable[pageNumber].pageNumber = virtualPage;
+    
     if(pageTable[pageNumber].dirtyBit == -1){
         pageTable[pageNumber].dirtyBit = 0;
     }

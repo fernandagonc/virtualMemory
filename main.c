@@ -37,6 +37,7 @@ int main(int argc, char *argv[]){
 
     for(i = 0; i < numPages; i++){
         pageTable[i].dirtyBit = -1;
+        pageTable[i].pageNumber = -1;
         pageTable[i].validBit = 0;    
         memcpy(pageTable[i].addr, "", strlen("")+1);
     }
@@ -83,13 +84,13 @@ int main(int argc, char *argv[]){
 
                     if(!strcmp(alg, "lru")){
                         freePageAt = LRU(pageTable, numPages);
-                        writeOnTable(freePageAt, pageTable, addr);
+                        writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
                         pageTable[freePageAt].lruID = operations;
                     }
                     //algoritmos de substituição
                 }
                 else{
-                    writeOnTable(freePageAt, pageTable, addr);
+                    writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
                     pageTable[freePageAt].lruID = operations;
                 }
             }
@@ -99,7 +100,7 @@ int main(int argc, char *argv[]){
 
             printf("\n");// tabela
             for(j = 0; j < numPages; j++){     
-                printf("%s ", pageTable[j].addr);
+                printf("%x ", pageTable[j].pageNumber);
             }
             printf("\n");
 
