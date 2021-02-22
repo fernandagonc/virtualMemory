@@ -2,73 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-// https://www.alltestanswers.com/designing-a-virtual-memory-manager-using-c-program/
-// https://github.com/ranadeep47/virtual-memory-simulation
-// https://github.com/8tiqa/vm-mgt/blob/master/vm.c
-// https://github.com/joelrlneto/memoriavirtual/blob/master/SMV.c
-typedef struct {
-    int validBit; //free =0; notfree = 1;
-    int dirtyBit; //writeback; =0 first write; =1 overwrite;
-    int frameNumber;
-    int pageNumber;
-    char addr[8];
-    int lruID; //quanto maior o ID, mais recente o endereço foi acessado
-} PageTableEntry;
-
-void writeOnTable(int pageNumber, PageTableEntry * pageTable, char * addr){
-
-    pageTable[pageNumber].validBit = 1;
-    memcpy(pageTable[pageNumber].addr, addr, strlen(addr)+1);
-
-    if(pageTable[pageNumber].dirtyBit == -1){
-        pageTable[pageNumber].dirtyBit = 0;
-    }
-    else if(pageTable[pageNumber].dirtyBit == 0){
-        pageTable[pageNumber].dirtyBit = 1;
-    }
-    
-
-}
-
-int findAddress(PageTableEntry * pageTable, char * addr, int numPages){
-
-    for(int i=0; i < numPages; i++){
-        if(pageTable[i].validBit == 1){//some address in this position
-            int str = strncmp(pageTable[i].addr, addr, sizeof(char[8]));
-            if(str == 0){ //found address
-                return i;
-            } 
-        }
-    }
-    return -1; //address not in pageTable
-
-}
-
-int findFreeAddress(PageTableEntry * pageTable, int numPages){
-    
-    for(int i=0; i < numPages; i++){
-        if(pageTable[i].validBit == 0){//no address in this position
-            return i;
-        }
-    }
-    return -1; //no free position found in pageTable
-
-}
-
-int LRU(PageTableEntry * pageTable, int numPages){
-    int lru = -1;
-    int minReference = pageTable[0].lruID;
-
-    for(int i=0; i < numPages; i++){
-
-        if(pageTable[i].lruID <= minReference){
-            lru = i;
-            minReference = pageTable[i].lruID;
-        }
-    }
-
-    return lru; 
-}
+#include "algorithm.c"
 
 int main(int argc, char *argv[]){
     char *alg, *file;
@@ -98,11 +32,14 @@ int main(int argc, char *argv[]){
 	}
 
     int numPages = memSize/pageSize;
-    int operations = 0; 
-    int writes = 0;
-    int reads = 0;
-    int pageFaults = 0;
-    int writeBacks = 0;
+    int i, j, operations = 0, writes = 0, reads = 0, pageFaults = 0, writeBacks = 0;
+    PageTableEntry pageTable[numPages];
+
+    for(i = 0; i < numPages; i++){
+        pageTable[i].dirtyBit = -1;
+        pageTable[i].validBit = 0;    
+        memcpy(pageTable[i].addr, "", strlen("")+1);
+    }
 
     unsigned offset = 0; 
     int tmpPageSize = pageSize;
@@ -115,18 +52,12 @@ int main(int argc, char *argv[]){
     int pageFoundAt, freePageAt;
     char addr[8];
     char rw;
-    int i, j;
     unsigned int addrInt;
-    PageTableEntry pageTable[numPages];
 
-    for(i = 0; i < numPages; i++){
-        pageTable[i].dirtyBit = -1;
-        pageTable[i].validBit = 0;    
-        memcpy(pageTable[i].addr, "", strlen("")+1);
-    }
     FILE *fileOpen = fopen(file, "r");  
     if(fileOpen != NULL){       
         clock_t begin = clock();
+        printf("\nExecutando o simulador...\n");
         printf("TABELA DE SUBSTIUIÇÕES\n");
 
         while(fscanf(fileOpen,"%s %c", addr,&rw) != EOF){
@@ -154,7 +85,6 @@ int main(int argc, char *argv[]){
                         freePageAt = LRU(pageTable, numPages);
                         writeOnTable(freePageAt, pageTable, addr);
                         pageTable[freePageAt].lruID = operations;
-
                     }
                     //algoritmos de substituição
                 }
@@ -164,7 +94,6 @@ int main(int argc, char *argv[]){
                 }
             }
             else{
-                // printf("Page found at %d \n", pageFoundAt);
                 pageTable[pageFoundAt].lruID = operations;
             }
 
@@ -174,13 +103,11 @@ int main(int argc, char *argv[]){
             }
             printf("\n");
 
-
         }
 
         clock_t end = clock();
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-        printf("\nExecutando o simulador...\n");
         printf("Offset: %x\n", offset);
         printf("Arquivo de entrada: %s\n", file);
 	    printf("Tamanho da memória: %iKB\n", memSize);
