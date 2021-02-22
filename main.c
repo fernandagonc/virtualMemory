@@ -63,9 +63,9 @@ int main(int argc, char *argv[]){
         while(fscanf(fileOpen,"%s %c", addr,&rw) != EOF){
             operations++;
             addr[8] = '\0';
-            // addrInt = (int)strtol(addr, NULL, 16);
-            // printf("addr: %d\n", addrInt);
-            //virtualPageNumber = addrInt >> offset;
+            
+            addrInt = (int)strtol(addr, NULL, 16);
+            virtualPageNumber = addrInt >> offset;
             pageFoundAt = findAddress(pageTable, addr, numPages);
 
             if(rw == 'W' || rw == 'w'){
