@@ -79,34 +79,36 @@ int FIFO(PageTableEntry * pageTable, int numPages){
 }
 
 
-int secondChance(PageTableEntry * pageTable, int numPages, int secondChancePtr){
-    if(secondChancePtr >= numPages){    
-        secondChancePtr = 0;
+int secondChance(PageTableEntry * pageTable, int numPages, int secondChanceIt){
+    if(secondChanceIt >= numPages){    
+        secondChanceIt = 0;
     }
     
-    while(pageTable[secondChancePtr].algID == 1) {
-        pageTable[secondChancePtr].algID = 0;
-        secondChancePtr++;
-        if(secondChancePtr >= numPages){
-            secondChancePtr = 0;
+    while(pageTable[secondChanceIt].algID == 1) {
+        pageTable[secondChanceIt].algID = 0;
+        secondChanceIt++;
+        if(secondChanceIt >= numPages){
+            secondChanceIt = 0;
         }
     }
-    return secondChancePtr;
+    return secondChanceIt;
 }
 
-int LeastReferenced (PageTableEntry * pageTable, int numPages, int leastReferencePtr){
+int LeastReferenced (PageTableEntry * pageTable, int numPages, int leastReferencedIt){
     //tem que terminar de fazer a parte do main e nem sei se essa parte ta certa, so comecei a ideia mesmo
-    if(leastReferencePtr >= numPages){    
-        leastReferencePtr = 0;
+    if(leastReferencedIt >= numPages){    
+        leastReferencedIt = 0;
     }
-    
-    while(pageTable[leastReferencePtr].algID != 0) {
-        pageTable[leastReferencePtr].algID--;
-        leastReferencePtr++;
-        if(leastReferencePtr >= numPages){
-            leastReferencePtr = 0;
+    int i, leastReferenced;
+    leastReferenced = leastReferencedIt;
+    for(i = 0; i < numPages; i++){
+        if(pageTable[leastReferencedIt].algID < pageTable[leastReferenced].algID){
+            leastReferenced = leastReferencedIt;
         }
+        leastReferencedIt++;
+        if(leastReferencedIt >= numPages){
+            leastReferencedIt = 0;
     }
-    return leastReferencePtr;
+    return leastReferenced;
 
 }

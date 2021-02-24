@@ -26,8 +26,8 @@ int main(int argc, char *argv[]){
 		return 0;
 	}	
 	
-	if(strcmp(alg, "lru") && strcmp(alg, "fifo") && strcmp(alg,"2a")){
-		printf("ERRO: O algoritmo deve ser lru, fifo ou 2a.");
+	if(strcmp(alg, "lru") && strcmp(alg, "fifo") && strcmp(alg,"2a") && strcmp(alg, "lr")){
+		printf("ERRO: O algoritmo deve ser lru, fifo, 2a ou lr(least referenced).");
 		return 0;	
 	}
 
@@ -57,7 +57,8 @@ int main(int argc, char *argv[]){
     char rw;
     unsigned int addrInt;
 
-    int secondChancePtr = 0;
+    int secondChanceIt = 0;
+    int leastReferencedIt = 0;
 
     FILE *fileOpen = fopen(file, "r");  
     if(fileOpen != NULL){       
@@ -93,18 +94,20 @@ int main(int argc, char *argv[]){
                         pageTable[freePageAt].algID = operations;
                     }
                     else if(!strcmp(alg, "2a")){
-                        freePageAt = secondChance(pageTable, numPages, secondChancePtr);
+                        freePageAt = secondChance(pageTable, numPages, secondChanceIt);
                         writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
-                        secondChancePtr = freePageAt+1;
+                        secondChanceIt = freePageAt+1;
                     }
                     else if(!strcmp(alg, "fifo")){
                         freePageAt = FIFO(pageTable, numPages);
                         writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
                         pageTable[freePageAt].algID = operations;
                     }
-                    // else{
-                    
-                    // }
+                    else if(!strcmp(alg, "lr")){
+                        freePageAt = LeastReferenced(pageTable, numPages, leastReferencedIt);
+                        writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
+                        leastReferencedIt = freePageAt+1;
+                    }
                 }
                 else{
                     writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
