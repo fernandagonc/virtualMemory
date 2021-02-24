@@ -31,8 +31,8 @@ int main(int argc, char *argv[]){
 		return 0;	
 	}
 
-    int numPages = 4;
-    int i, j, operations = 0, writes = 0, reads = 0, pageFaults = 0, writeBacks = 0;
+    int numPages = memSize/pageSize;
+    int i, j, operations = 0, writes = 0, reads = 0, pageFaults = 0, writeBacks = 0, hits=0;
     PageTableEntry pageTable[numPages];
 
     for(i = 0; i < numPages; i++){
@@ -84,7 +84,8 @@ int main(int argc, char *argv[]){
                 pageFaults++;
                 freePageAt = findFreeAddress(pageTable, numPages);
                 if(freePageAt == -1){//no free page
-                    writeBacks++;
+                    if(rw == 'W' || rw == 'w')
+                        writeBacks++;
 
                     if(!strcmp(alg, "lru")){
                         freePageAt = LRU(pageTable, numPages);
@@ -112,18 +113,19 @@ int main(int argc, char *argv[]){
                 }
             }
             else{
+                hits++;
                 if(pageTable[pageFoundAt].algID == 0 && !strcmp(alg, "2a"))
                     pageTable[pageFoundAt].algID = 1;
                 if(!strcmp(alg, "lru"))
                     pageTable[pageFoundAt].algID = operations;
             }
 
-            printf("\n");// tabela
-            for(j = 0; j < numPages; j++){     
-                printf("%d", pageTable[j].algID);
-                printf("%s ", pageTable[j].addr);
-            }
-            printf("\n");
+            // printf("\n");// tabela
+            // for(j = 0; j < numPages; j++){     
+            //     printf("%d", pageTable[j].algID);
+            //     printf("%s ", pageTable[j].addr);
+            // }
+            // printf("\n");
 
         }
 
@@ -140,6 +142,8 @@ int main(int argc, char *argv[]){
 	    printf("Operações de leitura: %i\n", reads);
 	    printf("Operações de escrita: %i\n", writes);
         printf("Número de pagefaults: %d\n", pageFaults);
+        printf("Número de páginas sujas: %d\n", writeBacks);
+        printf("Número de acertos de páginas : %d\n", hits);
         printf("Tempo de execução: %lf segundos \n \n", time_spent);
 
         fclose(fileOpen);

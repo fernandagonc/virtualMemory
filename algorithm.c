@@ -93,3 +93,20 @@ int secondChance(PageTableEntry * pageTable, int numPages, int secondChancePtr){
     }
     return secondChancePtr;
 }
+
+int LeastReferenced (PageTableEntry * pageTable, int numPages, int leastReferencePtr){
+    //tem que terminar de fazer a parte do main e nem sei se essa parte ta certa, so comecei a ideia mesmo
+    if(leastReferencePtr >= numPages){    
+        leastReferencePtr = 0;
+    }
+    
+    while(pageTable[leastReferencePtr].algID != 0) {
+        pageTable[leastReferencePtr].algID--;
+        leastReferencePtr++;
+        if(leastReferencePtr >= numPages){
+            leastReferencePtr = 0;
+        }
+    }
+    return leastReferencePtr;
+
+}
