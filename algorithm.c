@@ -95,7 +95,7 @@ int secondChance(PageTableEntry * pageTable, int numPages, int secondChanceIt){
 }
 
 int LeastReferenced (PageTableEntry * pageTable, int numPages, int leastReferencedIt){
-    //tem que terminar de fazer a parte do main e nem sei se essa parte ta certa, so comecei a ideia mesmo
+
     if(leastReferencedIt >= numPages){    
         leastReferencedIt = 0;
     }
@@ -106,7 +106,7 @@ int LeastReferenced (PageTableEntry * pageTable, int numPages, int leastReferenc
             leastReferenced = leastReferencedIt;
         }
         leastReferencedIt++;
-        if(leastReferencedIt >= numPages){
+        if(leastReferencedIt >= numPages)
             leastReferencedIt = 0;
     }
     return leastReferenced;
