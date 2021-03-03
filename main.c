@@ -61,12 +61,21 @@ int main(int argc, char *argv[]){
     int leastReferencedIt = 0;
 
     FILE *fileOpen = fopen(file, "r");  
-    if(fileOpen != NULL){       
+    if(fileOpen != NULL){     
+        
+        // printf("\n");// tabela
+        // for(j = 0; j < numPages; j++){     
+        //     printf("%d", pageTable[j].algID);
+        //     printf("%s ", pageTable[j].addr);
+        // }
+        // printf("\n");  
+
         clock_t begin = clock();
         printf("\nExecutando o simulador...\n");
         printf("TABELA DE SUBSTIUIÇÕES\n");
 
         while(fscanf(fileOpen,"%s %c", addr,&rw) != EOF){
+
             operations++;
             addr[8] = '\0';
             
@@ -123,17 +132,19 @@ int main(int argc, char *argv[]){
                     pageTable[pageFoundAt].algID = operations;
             }
 
-            // printf("\n");// tabela
-            // for(j = 0; j < numPages; j++){     
-            //     printf("%d", pageTable[j].algID);
-            //     printf("%s ", pageTable[j].addr);
-            // }
-            // printf("\n");
 
         }
 
+
         clock_t end = clock();
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+        
+        // printf("\n");// tabela
+        // for(j = 0; j < numPages; j++){     
+        //     printf("%d", pageTable[j].algID);
+        //     printf("%s ", pageTable[j].addr);
+        // }
+        // printf("\n");
 
         printf("Offset: %x\n", offset);
         printf("Arquivo de entrada: %s\n", file);

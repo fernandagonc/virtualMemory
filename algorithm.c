@@ -1,7 +1,6 @@
 typedef struct {
     int validBit; //free =0; notfree = 1;
     int dirtyBit; //writeback; =0 first write; =1 overwrite;
-    int frameNumber;
     unsigned int pageNumber;
     char addr[8];
     int algID; 
