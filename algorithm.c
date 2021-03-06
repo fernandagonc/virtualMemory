@@ -1,6 +1,5 @@
 typedef struct {
     int validBit; //free =0; notfree = 1;
-    int dirtyBit; //writeback; =0 first write; =1 overwrite;
     unsigned int pageNumber;
     char addr[8];
     int algID; 
@@ -11,13 +10,6 @@ void writeOnTable(int pageNumber, PageTableEntry * pageTable, char * addr, unsig
     pageTable[pageNumber].validBit = 1;
     memcpy(pageTable[pageNumber].addr, addr, strlen(addr)+1);
     pageTable[pageNumber].pageNumber = virtualPage;
-    
-    if(pageTable[pageNumber].dirtyBit == -1){
-        pageTable[pageNumber].dirtyBit = 0;
-    }
-    else if(pageTable[pageNumber].dirtyBit == 0){
-        pageTable[pageNumber].dirtyBit = 1;
-    }
     
 }
 

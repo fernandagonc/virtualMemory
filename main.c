@@ -36,7 +36,6 @@ int main(int argc, char *argv[]){
     PageTableEntry pageTable[numPages];
 
     for(i = 0; i < numPages; i++){
-        pageTable[i].dirtyBit = -1;
         pageTable[i].pageNumber = -1;
         pageTable[i].validBit = 0;
         memcpy(pageTable[i].addr, "", strlen("")+1);
@@ -63,17 +62,16 @@ int main(int argc, char *argv[]){
     
     FILE *fileOpen = fopen(file, "r");  
     if(fileOpen != NULL){     
-        
-        // printf("\n");// tabela
-        // for(j = 0; j < numPages; j++){     
-        //     printf("%d", pageTable[j].algID);
-        //     printf("%s ", pageTable[j].addr);
-        // }
-        // printf("\n");  
-
-        clock_t begin = clock();
         printf("\nExecutando o simulador...\n");
         printf("TABELA DE SUBSTIUIÇÕES\n");
+        printf("\n");// tabela
+        for(j = 0; j < numPages; j++){     
+            printf("%i ", pageTable[j].pageNumber);
+        }
+        printf("\n");  
+
+        clock_t begin = clock();
+
 
         while(fscanf(fileOpen,"%s %c", addr,&rw) != EOF){
 
@@ -157,12 +155,12 @@ int main(int argc, char *argv[]){
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
         fclose(fileOpen);
 
-        // printf("\n");// tabela
-        // for(j = 0; j < numPages; j++){     
-        //     printf("%d", pageTable[j].algID);
-        //     printf("%s ", pageTable[j].addr);
-        // }
-        // printf("\n");
+        printf("\n");// tabela
+        for(j = 0; j < numPages; j++){     
+            printf("%x ", pageTable[j].pageNumber);
+        }
+        printf("\n\n");  
+
 
         printf("Offset: %x\n", offset);
         printf("Arquivo de entrada: %s\n", file);
