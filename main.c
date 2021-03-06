@@ -32,7 +32,7 @@ int main(int argc, char *argv[]){
 	}
 
     int numPages = memSize/pageSize;
-    int i, j, operations = 0, writes = 0, reads = 0, pageFaults = 0, writeBacks = 0, hits=0;
+    int i, j, operations = 0, writes = 0, reads = 0, noCommand = 0, pageFaults = 0, writeBacks = 0, hits=0;
     PageTableEntry pageTable[numPages];
 
     for(i = 0; i < numPages; i++){
@@ -59,7 +59,8 @@ int main(int argc, char *argv[]){
 
     int secondChanceIt = 0;
     int leastReferencedIt = 0;
-
+    int oppW, oppR;
+    
     FILE *fileOpen = fopen(file, "r");  
     if(fileOpen != NULL){     
         
@@ -76,69 +77,86 @@ int main(int argc, char *argv[]){
 
         while(fscanf(fileOpen,"%s %c", addr,&rw) != EOF){
 
-            operations++;
-            addr[8] = '\0';
-            
-            addrInt = (int)strtol(addr, NULL, 16);
-            virtualPageNumber = addrInt >> offset;
-            pageFoundAt = findAddress(pageTable, addr, numPages);
+            oppW = rw == 'W' || rw == 'w';
+            oppR = rw == 'R' || rw == 'r';
 
-            if(rw == 'W' || rw == 'w'){
-                writes++;                
-            }
-            else if(rw == 'R' || rw == 'r'){				
-                reads++;
-            }
+            if(oppW || oppR){
 
-            if(pageFoundAt == -1){//page not found
-                pageFaults++;
-                freePageAt = findFreeAddress(pageTable, numPages);
-                if(freePageAt == -1){//no free page
-                    if(rw == 'W' || rw == 'w')
-                        writeBacks++;
+                if(oppW){
+                    writes++;     
+                }
+                else if(oppR){				
+                    reads++;
+                }
 
-                    if(!strcmp(alg, "lru")){
-                        freePageAt = LRU(pageTable, numPages);
-                        writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
-                        pageTable[freePageAt].algID = operations;
+                operations++;
+
+                addr[8] = '\0';
+                
+                addrInt = (int)strtol(addr, NULL, 16);
+                virtualPageNumber = addrInt >> offset;
+                pageFoundAt = findAddress(pageTable, addr, numPages);
+
+
+                if(pageFoundAt == -1){//page not found
+                    pageFaults++;
+                    freePageAt = findFreeAddress(pageTable, numPages);
+                    if(freePageAt == -1){//no free page
+                        if(oppW)
+                            writeBacks++;
+
+                        if(!strcmp(alg, "lru")){
+                            freePageAt = LRU(pageTable, numPages);
+                            writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
+                            pageTable[freePageAt].algID = operations;
+                        }
+                        else if(!strcmp(alg, "2a")){
+                            freePageAt = secondChance(pageTable, numPages, secondChanceIt);
+                            writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
+                            secondChanceIt = freePageAt+1;
+                        }
+                        else if(!strcmp(alg, "fifo")){
+                            freePageAt = FIFO(pageTable, numPages);
+                            writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
+                            pageTable[freePageAt].algID = operations;
+                        }
+                        else if(!strcmp(alg, "lr")){
+                            freePageAt = LeastReferenced(pageTable, numPages, leastReferencedIt);
+                            writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
+                            leastReferencedIt = freePageAt+1;
+                            pageTable[freePageAt].algID = 1;                         
+                        }
                     }
-                    else if(!strcmp(alg, "2a")){
-                        freePageAt = secondChance(pageTable, numPages, secondChanceIt);
+                    else{
                         writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
-                        secondChanceIt = freePageAt+1;
-                    }
-                    else if(!strcmp(alg, "fifo")){
-                        freePageAt = FIFO(pageTable, numPages);
-                        writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
-                        pageTable[freePageAt].algID = operations;
-                    }
-                    else if(!strcmp(alg, "lr")){
-                        freePageAt = LeastReferenced(pageTable, numPages, leastReferencedIt);
-                        writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
-                        leastReferencedIt = freePageAt+1;
+                        if(!strcmp(alg, "lru") || !strcmp(alg, "fifo"))
+                            pageTable[freePageAt].algID = operations;
+                        if(!strcmp(alg, "lr"))
+                            pageTable[freePageAt].algID++; 
                     }
                 }
                 else{
-                    writeOnTable(freePageAt, pageTable, addr, virtualPageNumber);
-                    if(!strcmp(alg, "lru") || !strcmp(alg, "fifo"))
-                        pageTable[freePageAt].algID = operations;
+                    hits++;
+                    if(pageTable[pageFoundAt].algID == 0 && !strcmp(alg, "2a"))
+                        pageTable[pageFoundAt].algID = 1;
+                    if(!strcmp(alg, "lru"))
+                        pageTable[pageFoundAt].algID = operations;
+                    if(!strcmp(alg, "lr"))
+                        pageTable[pageFoundAt].algID++;
                 }
+
             }
             else{
-                hits++;
-                if(pageTable[pageFoundAt].algID == 0 && !strcmp(alg, "2a"))
-                    pageTable[pageFoundAt].algID = 1;
-                if(!strcmp(alg, "lru"))
-                    pageTable[pageFoundAt].algID = operations;
+                noCommand++;
             }
-
 
         }
 
 
         clock_t end = clock();
         double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-        
+        fclose(fileOpen);
+
         // printf("\n");// tabela
         // for(j = 0; j < numPages; j++){     
         //     printf("%d", pageTable[j].algID);
@@ -153,6 +171,7 @@ int main(int argc, char *argv[]){
 	    printf("Técnica de reposição: %s\n", alg);
 	    printf("Número de páginas: %i\n", numPages);
 	    printf("Operações no arquivo de entrada: %i\n", operations);
+        printf("Linhas sem comandos: %i\n", noCommand);
 	    printf("Operações de leitura: %i\n", reads);
 	    printf("Operações de escrita: %i\n", writes);
         printf("Número de pagefaults: %d\n", pageFaults);
@@ -160,7 +179,6 @@ int main(int argc, char *argv[]){
         printf("Número de acertos de páginas : %d\n", hits);
         printf("Tempo de execução: %lf segundos \n \n", time_spent);
 
-        fclose(fileOpen);
 
     }
     else{
